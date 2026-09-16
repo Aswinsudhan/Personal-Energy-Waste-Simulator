@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Energy Waste Simulator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">EW</span><div><strong>Energy Waste</strong><small>Simulator</small></div></div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-item active" data-view="overview"><span>01</span> Overview</button>
+        <button class="nav-item" data-view="appliances"><span>02</span> Appliances</button>
+        <button class="nav-item" data-view="waste"><span>03</span> Potential waste</button>
+        <button class="nav-item" data-view="simulator"><span>04</span> What-if lab</button>
+        <button class="nav-item" data-view="report"><span>05</span> Full report</button>
+      </nav>
+      <div class="sidebar-footer"><div class="status-dot"></div><span>Private, local data</span></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar"><div><p class="eyebrow">HOUSEHOLD ENERGY / <span id="todayLabel"></span></p><h1 id="pageTitle">Your energy at a glance</h1></div><div class="tariff-control"><label for="tariff">Tariff</label><div class="tariff-input"><span>Rs.</span><input id="tariff" type="number" min="0.01" step="0.01" value="8"></div><span>/ kWh</span></div></header>
+
+      <section class="view active" id="overviewView">
+        <div class="hero-row"><div><h2>Make every unit count.</h2><p>See where your electricity goes, spot potential avoidable usage, and test a better routine.</p></div><button class="primary-button" id="heroAddButton">+ Add appliance</button></div>
+        <div class="metric-grid" id="metricGrid"></div>
+        <div class="content-grid overview-grid"><section class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow">MONTHLY LOAD</p><h3>Where your energy goes</h3></div><button class="text-button" data-view-link="appliances">View details -></button></div><div id="usageChart" class="usage-chart"></div></section><section class="panel score-panel"><div class="panel-heading"><div><p class="eyebrow">PROJECT INDICATOR</p><h3>Waste score</h3></div></div><div class="score-ring" id="scoreRing"><strong id="scoreValue">0%</strong><span>potential</span></div><div class="score-label" id="scoreLabel">Very Low</div><p class="muted">A transparent project-defined indicator, not an official efficiency standard.</p></section></div>
+        <section class="panel attention-panel"><div class="panel-heading"><div><p class="eyebrow">NEXT BEST ACTION</p><h3 id="attentionTitle">Add your first appliance</h3></div><span class="pill" id="attentionPill">GET STARTED</span></div><p id="attentionText">Start with the appliances you use every day. The simulator will calculate consumption and highlight possible savings.</p><button class="secondary-button" id="attentionButton">Add appliance</button></section>
+      </section>
+
+      <section class="view" id="appliancesView"><div class="section-heading"><div><p class="eyebrow">YOUR HOUSEHOLD</p><h2>Appliance library</h2><p>Enter actual and necessary usage to make potential waste visible.</p></div><button class="primary-button" id="addButton">+ Add appliance</button></div><div class="panel table-panel"><div class="table-toolbar"><strong id="applianceCount">0 appliances</strong><button class="text-button" id="sampleButton">Load example household</button></div><div class="table-wrap"><table><thead><tr><th>Appliance</th><th>Power</th><th>Usage</th><th>Monthly energy</th><th>Monthly cost</th><th></th></tr></thead><tbody id="applianceTable"></tbody></table><div class="empty-state" id="emptyState"><div class="empty-icon">+</div><h3>Your household is empty</h3><p>Add an appliance or load the example household to see your energy picture.</p></div></div></div></section>
+
+      <section class="view" id="wasteView"><div class="section-heading"><div><p class="eyebrow">POTENTIAL AVOIDABLE USAGE</p><h2>Find the levers</h2><p>Extra usage is not automatically waste. These are estimates based on the necessary hours you entered.</p></div></div><div class="metric-grid compact" id="wasteMetrics"></div><div class="panel table-panel"><div class="panel-heading"><div><h3>Potential waste by appliance</h3></div></div><div class="table-wrap"><table><thead><tr><th>Appliance</th><th>Actual / necessary</th><th>Potential waste</th><th>Possible cost</th><th></th></tr></thead><tbody id="wasteTable"></tbody></table></div></div></section>
+
+      <section class="view" id="simulatorView"><div class="section-heading"><div><p class="eyebrow">SCENARIO BUILDER</p><h2>Try a lighter routine</h2><p>Move one appliance to a new daily runtime and compare the household result.</p></div></div><div class="simulator-layout"><section class="panel simulator-controls"><label for="simAppliance">Choose an appliance</label><select id="simAppliance"></select><div class="range-heading"><label for="simHours">Optimized hours per day</label><output id="simHoursOutput">0 h</output></div><input id="simHours" type="range" min="0" max="24" step="0.5" value="0"><button class="primary-button full-width" id="runSimulation">Run comparison</button></section><section class="panel simulation-result" id="simulationResult"><div class="result-placeholder"><span>04</span><h3>Set a scenario</h3><p>Choose an appliance and adjust the slider to see energy and money saved.</p></div></section></div></section>
+
+      <section class="view" id="reportView"><div class="section-heading"><div><p class="eyebrow">HOUSEHOLD SNAPSHOT</p><h2>Full report</h2><p>A clear summary you can use for a college demonstration or daily review.</p></div><button class="secondary-button" id="printButton">Print report</button></div><div class="panel report-panel" id="reportContent"></div></section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="close-button" id="closeModal" aria-label="Close">x</button><p class="eyebrow">APPLIANCE DETAILS</p><h2 id="modalTitle">Add appliance</h2><form id="applianceForm"><input type="hidden" id="editId"><div class="form-grid"><label class="wide">Name<input id="name" required placeholder="e.g. Ceiling fan"></label><label>Power rating<input id="power" type="number" min="0.01" step="0.01" required placeholder="75"></label><label>Units<input id="units" type="number" min="1" step="1" required value="1"></label><label>Hours / day<input id="hours" type="number" min="0" max="24" step="0.5" required placeholder="8"></label><label>Days / month<input id="days" type="number" min="1" max="31" step="1" required value="30"></label><label class="wide">Necessary hours / day<input id="necessary" type="number" min="0" max="24" step="0.5" required placeholder="5"><small>Use a realistic estimate. Extra use is only potential waste.</small></label></div><p class="form-error" id="formError"></p><div class="modal-actions"><button type="button" class="secondary-button" id="cancelModal">Cancel</button><button type="submit" class="primary-button">Save appliance</button></div></form></section></div>
+  <script src="app.js"></script>
+</body>
+</html>

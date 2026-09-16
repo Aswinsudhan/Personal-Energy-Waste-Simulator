@@ -1,0 +1,9 @@
+{
+  "name": "personal-energy-waste-simulator-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local web interface for the Personal Energy Waste Simulator",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
