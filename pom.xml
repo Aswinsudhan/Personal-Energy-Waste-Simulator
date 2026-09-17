@@ -6,7 +6,7 @@
   <properties><maven.compiler.release>21</maven.compiler.release></properties>
   <dependencies>
     <dependency><groupId>com.google.firebase</groupId><artifactId>firebase-admin</artifactId><version>9.4.3</version></dependency>
-    <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>2.17.2</version></dependency>
+    <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId><version>2.18.9</version></dependency>
   </dependencies>
   <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><version>3.8.1</version><executions><execution><id>copy-dependencies</id><phase>package</phase><goals><goal>copy-dependencies</goal></goals><configuration><outputDirectory>${project.build.directory}/dependency</outputDirectory></configuration></execution></executions></plugin><plugin><groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.4.1</version><configuration><mainClass>api.ApiServer</mainClass></configuration></plugin></plugins></build>
 </project>
