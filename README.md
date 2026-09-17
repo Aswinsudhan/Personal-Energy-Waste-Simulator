@@ -20,6 +20,8 @@ The old local-storage values are no longer loaded into an authenticated session.
 6. Deploy the Java service using [render.yaml](render.yaml), or configure Render with `mvn -q package` as the build command and `java -cp "target/classes;target/dependency/*" api.ApiServer` as the start command. Render uses the included [Dockerfile](Dockerfile) by default.
 7. Set the Render API URL in [web/config.js](web/config.js) as `apiUrl`. For a Vite-based Vercel wrapper, the equivalent deployment variable is `VITE_API_URL`; this repository intentionally retains its existing dependency-free static frontend.
 
+For Vercel, the included [vercel.json](vercel.json) generates `web/config.js` during the build. Add the public Firebase variables and `VITE_API_URL` in Vercel Project Settings for the Production, Preview, and Development environments as needed. Do not commit the generated deployment values.
+
 Required server variables are listed in [.env.example](.env.example). Never commit `.env`, service-account JSON, or real OAuth credentials.
 
 ## API

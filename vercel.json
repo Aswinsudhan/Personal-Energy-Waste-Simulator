@@ -1,0 +1,6 @@
+{
+  "buildCommand": "node scripts/generate-config.js",
+  "outputDirectory": "web",
+  "framework": null,
+  "cleanUrls": true
+}
