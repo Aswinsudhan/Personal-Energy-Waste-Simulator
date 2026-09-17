@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Personal Energy Waste Simulator</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
 </head>
 <body>
+  <section class="auth-gate" id="authGate"><div class="auth-card"><span class="brand-mark">EW</span><p class="eyebrow">PERSONAL ENERGY / PRIVATE WORKSPACE</p><h1>Make every unit count.</h1><p>Sign in to keep your appliance data securely separated from every other account.</p><button class="primary-button" id="loginButton">Continue with Google</button><p class="form-error" id="authError"></p></div></section>
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand"><span class="brand-mark">EW</span><div><strong>Energy Waste</strong><small>Simulator</small></div></div>
@@ -21,7 +23,7 @@
     </aside>
 
     <main class="main-content">
-      <header class="topbar"><div><p class="eyebrow">HOUSEHOLD ENERGY / <span id="todayLabel"></span></p><h1 id="pageTitle">Your energy at a glance</h1></div><div class="tariff-control"><label for="tariff">Tariff</label><div class="tariff-input"><span>Rs.</span><input id="tariff" type="number" min="0.01" step="0.01" value="8"></div><span>/ kWh</span></div></header>
+      <header class="topbar"><div><p class="eyebrow">HOUSEHOLD ENERGY / <span id="todayLabel"></span></p><h1 id="pageTitle">Your energy at a glance</h1></div><div class="topbar-actions"><div class="tariff-control"><label for="tariff">Tariff</label><div class="tariff-input"><span>Rs.</span><input id="tariff" type="number" min="0.01" step="0.01" value="8"></div><span>/ kWh</span></div><button class="text-button" id="logoutButton">Log out</button></div></header>
 
       <section class="view active" id="overviewView">
         <div class="hero-row"><div><h2>Make every unit count.</h2><p>See where your electricity goes, spot potential avoidable usage, and test a better routine.</p></div><button class="primary-button" id="heroAddButton">+ Add appliance</button></div>
@@ -41,6 +43,10 @@
   </div>
 
   <div class="modal-backdrop" id="modalBackdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="close-button" id="closeModal" aria-label="Close">x</button><p class="eyebrow">APPLIANCE DETAILS</p><h2 id="modalTitle">Add appliance</h2><form id="applianceForm"><input type="hidden" id="editId"><div class="form-grid"><label class="wide">Name<input id="name" required placeholder="e.g. Ceiling fan"></label><label>Power rating<input id="power" type="number" min="0.01" step="0.01" required placeholder="75"></label><label>Units<input id="units" type="number" min="1" step="1" required value="1"></label><label>Hours / day<input id="hours" type="number" min="0" max="24" step="0.5" required placeholder="8"></label><label>Days / month<input id="days" type="number" min="1" max="31" step="1" required value="30"></label><label class="wide">Necessary hours / day<input id="necessary" type="number" min="0" max="24" step="0.5" required placeholder="5"><small>Use a realistic estimate. Extra use is only potential waste.</small></label></div><p class="form-error" id="formError"></p><div class="modal-actions"><button type="button" class="secondary-button" id="cancelModal">Cancel</button><button type="submit" class="primary-button">Save appliance</button></div></form></section></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="auth.js"></script>
 </body>
 </html>

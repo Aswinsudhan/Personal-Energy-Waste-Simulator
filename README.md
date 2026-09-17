@@ -1,5 +1,45 @@
 # Personal Energy Waste Simulator
 
+## Hosted architecture
+
+The web dashboard remains a static frontend suitable for Vercel. Google Identity Services are handled by Firebase Authentication in the browser; the browser sends the resulting Firebase ID token to the Java API on Render. The API verifies that token with Firebase Admin SDK and reads/writes only `users/{verifiedUid}/...` in Firestore.
+
+```text
+Google Login -> Vercel frontend -> HTTPS -> Render Java API -> Firebase Authentication + Firestore
+```
+
+The old local-storage values are no longer loaded into an authenticated session. This prevents anonymous browser data from silently being assigned to a Google account. The authenticated session starts empty unless its Firestore account already has data.
+
+## Configure Firebase and deployment
+
+1. Create a Firebase project and enable **Authentication > Sign-in method > Google**.
+2. Create a Firestore database and deploy [firestore.rules](firestore.rules). The rules permit access only when `request.auth.uid` equals the document path user ID. The Render API still performs its own token verification and ownership scoping.
+3. Register a Firebase web app. Copy its public configuration into [web/config.js](web/config.js). Public web API keys are not admin credentials.
+4. Create a Firebase service account. Add `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` to Render. Keep the private key only in Render environment variables; never put it in `web/`.
+5. Set `FRONTEND_URL` on Render to the exact Vercel origin, including `https://` and excluding a trailing path. CORS is intentionally not `*`.
+6. Deploy the Java service using [render.yaml](render.yaml), or configure Render with `mvn -q package` as the build command and `java -cp "target/classes;target/dependency/*" api.ApiServer` as the start command. Render uses the included [Dockerfile](Dockerfile) by default.
+7. Set the Render API URL in [web/config.js](web/config.js) as `apiUrl`. For a Vite-based Vercel wrapper, the equivalent deployment variable is `VITE_API_URL`; this repository intentionally retains its existing dependency-free static frontend.
+
+Required server variables are listed in [.env.example](.env.example). Never commit `.env`, service-account JSON, or real OAuth credentials.
+
+## API
+
+All routes except `/api/health` require `Authorization: Bearer <Firebase ID token>`:
+
+```text
+GET/POST /api/appliances
+PUT/DELETE /api/appliances/{id}
+GET/POST /api/simulations
+GET       /api/dashboard
+GET/PUT   /api/settings
+```
+
+The API validates appliance input and calculates energy using `watts * units * hours * days / 1000`. Dashboard values aggregate every appliance in the authenticated user's collection, including total consumption, target consumption, potentially avoidable energy, monthly cost, annual consumption, and potential annual saving.
+
+## Acceptance test
+
+Use two real Google accounts. Add appliances and a simulation under account A, log out, sign in as account B, and confirm account A's data is absent. Add account B's data, log out, and sign in as A again. Each account must see only its own Firestore collection. Browser sign-out clears the in-memory state before another account can load.
+
 A beginner-friendly Java 21 console application that estimates household electricity use, identifies potential avoidable usage, and compares current and optimized scenarios.
 
 ## Problem statement

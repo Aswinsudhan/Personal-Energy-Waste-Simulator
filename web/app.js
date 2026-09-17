@@ -1,7 +1,16 @@
-const state={appliances:JSON.parse(localStorage.getItem('energy-appliances')||'[]'),tariff:Number(localStorage.getItem('energy-tariff')||8)};
+const state={appliances:[],tariff:8,token:null,ready:false};
+const config=window.ENERGY_CONFIG||{}; const apiUrl=config.apiUrl||'';
+const firebaseReady=Boolean(window.firebase&&config.firebase&&config.firebase.apiKey&&config.firebase.apiKey!=='your-web-api-key');
+if(firebaseReady){firebase.initializeApp(config.firebase);state.auth=firebase.auth();}
+async function api(path,options={}){if(!state.token)throw new Error('Authentication required');const response=await fetch(`${apiUrl}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${state.token}`,...(options.headers||{})}});if(!response.ok)throw new Error((await response.json().catch(()=>({}))).error||'Request failed');return response.status===204?null:response.json()}
+function fromApi(a){return{id:a.id,name:a.name,power:a.powerWatts,units:a.units||1,hours:a.actualHoursPerDay,days:a.days,necessary:a.necessaryHoursPerDay}}
+function toApi(a){return{name:a.name,powerWatts:a.power,units:a.units,actualHoursPerDay:a.hours,days:a.days,necessaryHoursPerDay:a.necessary}}
+window.state=state;window.api=api;window.fromApi=fromApi;window.toApi=toApi;
 const $=id=>document.getElementById(id); const money=n=>`Rs. ${n.toFixed(2)}`; const number=n=>n.toFixed(2);
 const calculator={daily:a=>a.power*a.units*a.hours/1000,monthly:a=>calculator.daily(a)*a.days,yearly:a=>calculator.monthly(a)*12,wasteDaily:a=>Math.max(0,a.hours-a.necessary)*a.power*a.units/1000,wasteMonthly:a=>calculator.wasteDaily(a)*a.days};
+window.calculator=calculator;
 function totals(){const monthly=state.appliances.reduce((s,a)=>s+calculator.monthly(a),0),waste=state.appliances.reduce((s,a)=>s+calculator.wasteMonthly(a),0);return{daily:monthly/30,monthly,yearly:monthly*12,waste,wastePercent:monthly? waste/monthly*100:0};}
+window.totals=totals;
 function score(p){return p<5?'Very Low':p<15?'Low':p<30?'Moderate':p<50?'High':'Very High'}
 function save(){localStorage.setItem('energy-appliances',JSON.stringify(state.appliances));localStorage.setItem('energy-tariff',state.tariff)}
 function render(){state.tariff=Number($('tariff').value)||state.tariff; save(); renderOverview();renderAppliances();renderWaste();renderSimulator();renderReport()}
