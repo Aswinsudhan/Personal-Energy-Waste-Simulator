@@ -17,11 +17,9 @@ import model.Appliance;
 import service.EnergyCalculator;
 import service.WasteAnalyzer;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -122,7 +120,7 @@ public final class ApiServer {
     private static Map<String, Object> readBody(HttpExchange exchange) throws IOException { return JSON.readValue(exchange.getRequestBody(), new TypeReference<>() {}); }
     private static FirebaseToken authenticate(HttpExchange exchange) throws Exception { String header = exchange.getRequestHeaders().getFirst("Authorization"); if (header == null || !header.startsWith("Bearer ")) throw new SecurityException(); return FirebaseAuth.getInstance().verifyIdToken(header.substring(7)); }
     private static void ensureProfile(FirebaseToken token) throws Exception { DocumentReference ref = DB.collection("users").document(token.getUid()); if (!ref.get().get().exists()) ref.set(Map.of("name", token.getName() == null ? "" : token.getName(), "email", token.getEmail(), "profileImage", token.getPicture() == null ? "" : token.getPicture(), "createdAt", Instant.now().toString())).get(); }
-    private static Firestore initializeFirebase() { try { String key = System.getenv("FIREBASE_PRIVATE_KEY").replace("\\n", "\n"); String json = "{\"type\":\"service_account\",\"project_id\":\"" + System.getenv("FIREBASE_PROJECT_ID") + "\",\"private_key\":\"" + key.replace("\n", "\\n") + "\",\"client_email\":\"" + System.getenv("FIREBASE_CLIENT_EMAIL") + "\"}"; FirebaseOptions options = FirebaseOptions.builder().setCredentials(GoogleCredentials.fromStream(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))).setProjectId(System.getenv("FIREBASE_PROJECT_ID")).build(); if (FirebaseApp.getApps().isEmpty()) FirebaseApp.initializeApp(options); return FirestoreClient.getFirestore(); } catch (Exception e) { throw new IllegalStateException("Firebase configuration is invalid", e); } }
+    private static Firestore initializeFirebase() { try { String projectId = System.getenv("FIREBASE_PROJECT_ID"); FirebaseOptions options = FirebaseOptions.builder().setCredentials(GoogleCredentials.getApplicationDefault()).setProjectId(projectId == null || projectId.isBlank() ? null : projectId).build(); if (FirebaseApp.getApps().isEmpty()) FirebaseApp.initializeApp(options); return FirestoreClient.getFirestore(); } catch (Exception e) { throw new IllegalStateException("Firebase configuration is invalid", e); } }
     private static void addCors(HttpExchange exchange) { String origin = System.getenv("FRONTEND_URL"); if (origin != null && !origin.isBlank()) exchange.getResponseHeaders().set("Access-Control-Allow-Origin", origin); exchange.getResponseHeaders().set("Vary", "Origin"); exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Authorization, Content-Type"); exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); }
     private static void sendError(HttpExchange exchange, int status, String message) throws IOException { send(exchange, status, Map.of("error", message)); }
     private static void send(HttpExchange exchange, int status, Object body) throws IOException { byte[] bytes = JSON.writeValueAsBytes(body); exchange.getResponseHeaders().set("Content-Type", "application/json"); exchange.sendResponseHeaders(status, status == 204 ? -1 : bytes.length); if (status != 204) try (OutputStream out = exchange.getResponseBody()) { out.write(bytes); } }

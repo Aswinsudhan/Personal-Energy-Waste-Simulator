@@ -2,10 +2,10 @@
 
 ## Hosted architecture
 
-The web dashboard remains a static frontend suitable for Vercel. Google Identity Services are handled by Firebase Authentication in the browser; the browser sends the resulting Firebase ID token to the Java API on Render. The API verifies that token with Firebase Admin SDK and reads/writes only `users/{verifiedUid}/...` in Firestore.
+The web dashboard remains a static frontend suitable for Vercel. Google Identity Services are handled by Firebase Authentication in the browser; the browser sends the resulting Firebase ID token to the Java API on Google Cloud Run. The API verifies that token with Firebase Admin SDK and reads/writes only `users/{verifiedUid}/...` in Firestore.
 
 ```text
-Google Login -> Vercel frontend -> HTTPS -> Render Java API -> Firebase Authentication + Firestore
+Google Login -> Vercel frontend -> HTTPS -> Cloud Run Java API -> Firebase Authentication + Firestore
 ```
 
 The old local-storage values are no longer loaded into an authenticated session. This prevents anonymous browser data from silently being assigned to a Google account. The authenticated session starts empty unless its Firestore account already has data.
@@ -13,12 +13,21 @@ The old local-storage values are no longer loaded into an authenticated session.
 ## Configure Firebase and deployment
 
 1. Create a Firebase project and enable **Authentication > Sign-in method > Google**.
-2. Create a Firestore database and deploy [firestore.rules](firestore.rules). The rules permit access only when `request.auth.uid` equals the document path user ID. The Render API still performs its own token verification and ownership scoping.
+2. Create a Firestore database and deploy [firestore.rules](firestore.rules). The rules permit access only when `request.auth.uid` equals the document path user ID. The Cloud Run API still performs its own token verification and ownership scoping.
 3. Register a Firebase web app. Copy its public configuration into [web/config.js](web/config.js). Public web API keys are not admin credentials.
-4. Create a Firebase service account. Add `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` to Render. Keep the private key only in Render environment variables; never put it in `web/`.
-5. Set `FRONTEND_URL` on Render to the exact Vercel origin, including `https://` and excluding a trailing path. CORS is intentionally not `*`.
-6. Deploy the Java service using [render.yaml](render.yaml), or configure Render with `mvn -q package` as the build command and `java -cp "target/classes;target/dependency/*" api.ApiServer` as the start command. Render uses the included [Dockerfile](Dockerfile) by default.
-7. Set the Render API URL in [web/config.js](web/config.js) as `apiUrl`. For a Vite-based Vercel wrapper, the equivalent deployment variable is `VITE_API_URL`; this repository intentionally retains its existing dependency-free static frontend.
+4. Create a dedicated runtime service account in Google Cloud and grant it `roles/datastore.user` and `roles/firebaseauth.admin`. Do not create a JSON key. [ApiServer.java](src/api/ApiServer.java) uses Application Default Credentials, so Cloud Run supplies credentials through the attached service account.
+5. Deploy the container from the project root:
+
+```text
+gcloud config set project energy-waste-simulator-3074a
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+gcloud iam service-accounts create energy-api-runtime --display-name="Energy API Cloud Run runtime"
+gcloud projects add-iam-policy-binding energy-waste-simulator-3074a --member="serviceAccount:energy-api-runtime@energy-waste-simulator-3074a.iam.gserviceaccount.com" --role="roles/datastore.user"
+gcloud projects add-iam-policy-binding energy-waste-simulator-3074a --member="serviceAccount:energy-api-runtime@energy-waste-simulator-3074a.iam.gserviceaccount.com" --role="roles/firebaseauth.admin"
+gcloud run deploy personal-energy-api --source . --region us-central1 --platform managed --allow-unauthenticated --service-account energy-api-runtime@energy-waste-simulator-3074a.iam.gserviceaccount.com --set-env-vars FIREBASE_PROJECT_ID=energy-waste-simulator-3074a,FRONTEND_URL=https://your-vercel-domain.vercel.app
+```
+
+6. Set `VITE_API_URL` in Vercel to the Cloud Run service URL. The frontend variables remain public Firebase web configuration values; no private key is required.
 
 For Vercel, the included [vercel.json](vercel.json) generates `web/config.js` during the build. Add the public Firebase variables and `VITE_API_URL` in Vercel Project Settings for the Production, Preview, and Development environments as needed. Do not commit the generated deployment values.
 
